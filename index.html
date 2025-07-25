@@ -1,0 +1,266 @@
+<!DOCTYPE html> 
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>For you frame</title>
+  <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/833/833472.png" type="image/png">
+  <style>
+    html, body {
+      margin: 0;
+      height: 100%;
+      font-family: "Arial", sans-serif;
+      overflow: hidden;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-image: url('Background.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      position: relative;
+      /* transition: opacity 1s ease; */ /* ไม่ต้องใช้แล้ว */
+      opacity: 1;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(255, 182, 193, 0.5);
+      z-index: 0;
+    }
+
+    /* Overlay สีขาวสำหรับเปลี่ยนหน้า */
+    #white-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: white;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.8s ease;
+      z-index: 9999;
+    }
+
+    canvas#hearts {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* 🔐 กุญแจ */
+    .lock-box {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .outer-lock {
+      background: linear-gradient(145deg, #e585a5, #ed92b6);
+      border-radius: 40px;
+      padding: 30px;
+      box-shadow: 0 8px 20px rgba(233, 30, 99, 0.5);
+      width: 100%;
+      position: relative;
+    }
+
+    .inner-heart {
+      background-color: #ffe4ec;
+      border-radius: 30px;
+      padding: 30px 20px;
+      text-align: center;
+      box-shadow: inset 0 0 10px rgba(233, 30, 99, 0.3);
+    }
+
+    .heart-icon {
+      font-size: 80px;
+      margin-bottom: 10px;
+      color: #d81b60;
+    }
+
+    input[type="password"] {
+      font-size: 24px;
+      padding: 12px;
+      border: 2px solid #d81b60;
+      border-radius: 12px;
+      text-align: center;
+      width: 80%;
+      color: #880e4f;
+      background-color: #fff0f6;
+      margin-bottom: 15px;
+      outline: none;
+    }
+
+    button {
+      padding: 12px 30px;
+      font-size: 18px;
+      background-color: #d81b60;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(216, 27, 96, 0.6);
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #b01450;
+    }
+
+    .message {
+      margin-top: 14px;
+      font-weight: 600;
+      font-size: 16px;
+      min-height: 22px;
+    }
+
+    .message.error {
+      color: #c2185b;
+    }
+
+    .message.success {
+      color: #4caf50;
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="hearts"></canvas>
+
+<div class="lock-box" role="main" aria-label="กล่องกุญแจหัวใจ">
+  <div class="outer-lock">
+    <div class="inner-heart">
+      <div class="heart-icon" title="หัวใจในกุญแจ">❤️</div>
+      <input type="password" id="passcode" placeholder="ใส่รหัสดู ../.. " aria-label="กรุณาใส่รหัส" />
+      <button onclick="checkPasscode()">เปิดกุญแจ</button>
+      <div class="message" id="message" aria-live="polite"></div>
+    </div>
+  </div>
+</div>
+
+<!-- overlay สีขาวสำหรับเปลี่ยนหน้า -->
+<div id="white-overlay"></div>
+
+<script>
+  const whiteOverlay = document.getElementById('white-overlay');
+  const correctCode = "25/07";
+  const messageEl = document.getElementById('message');
+  const inputEl = document.getElementById('passcode');
+
+  function fadeToWhiteAndRedirect(url) {
+    whiteOverlay.style.pointerEvents = "auto"; // กันคลิกอื่น
+    whiteOverlay.style.opacity = '1';          // เริ่ม fade in overlay
+
+    setTimeout(() => {
+      window.location.href = url;
+    }, 800);  // รอให้ overlay ขาวขึ้นก่อนเปลี่ยนหน้า (เวลาต้องตรงกับ transition)
+  }
+
+  function checkPasscode() {
+    const userInput = inputEl.value.trim();
+    if (userInput === correctCode) {
+      messageEl.textContent = "ถูกต้องแล้วว เดะภาไปดูอาไรรร";
+      messageEl.classList.remove('error');
+      messageEl.classList.add('success');
+      fadeToWhiteAndRedirect("indexhome.html");
+    } else {
+      messageEl.textContent = "นึกดีๆรหัสอะไรดีน้าาา";
+      messageEl.classList.remove('success');
+      messageEl.classList.add('error');
+    }
+  }
+
+  inputEl.addEventListener("keypress", function (event) {
+    if (event.key === "Enter") {
+      checkPasscode();
+    }
+  });
+
+  // หัวใจลอย
+  const canvas = document.getElementById('hearts');
+  const ctx = canvas.getContext('2d');
+
+  let W, H;
+  function resize() {
+    W = window.innerWidth;
+    H = window.innerHeight;
+    canvas.width = W;
+    canvas.height = H;
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  class Heart {
+    constructor() {
+      this.x = Math.random() * W;
+      this.y = H + 20;
+      this.size = 10 + Math.random() * 20;
+      this.speedY = 1 + Math.random() * 2;
+      this.speedX = (Math.random() - 0.5) * 0.5;
+      this.opacity = 0.6 + Math.random() * 0.4;
+      this.angle = 0;
+      this.spinSpeed = (Math.random() - 0.5) * 0.02;
+      this.color = `rgba(233, 30, 99, ${this.opacity})`;
+    }
+    draw() {
+      ctx.save();
+      ctx.translate(this.x, this.y);
+      ctx.rotate(this.angle);
+      ctx.fillStyle = this.color;
+      ctx.beginPath();
+      const s = this.size / 2;
+      ctx.moveTo(0, 0);
+      ctx.bezierCurveTo(0, -s, -s, -s, -s, 0);
+      ctx.bezierCurveTo(-s, s * 1.5, 0, s * 1.8, 0, s * 2.5);
+      ctx.bezierCurveTo(0, s * 1.8, s, s * 1.5, s, 0);
+      ctx.bezierCurveTo(s, -s, 0, -s, 0, 0);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+    update() {
+      this.y -= this.speedY;
+      this.x += this.speedX;
+      this.angle += this.spinSpeed;
+      if (this.y < H / 2) {
+        this.opacity -= 0.01;
+        if (this.opacity < 0) this.opacity = 0;
+        this.color = `rgba(233, 30, 99, ${this.opacity})`;
+      }
+    }
+  }
+
+  let hearts = [];
+  function addHeart() {
+    if (hearts.length < 40) {
+      hearts.push(new Heart());
+    }
+  }
+
+  function animate() {
+    ctx.clearRect(0, 0, W, H);
+    hearts.forEach((heart, index) => {
+      heart.update();
+      heart.draw();
+      if (heart.opacity <= 0) {
+        hearts.splice(index, 1);
+      }
+    });
+    addHeart();
+    requestAnimationFrame(animate);
+  }
+  animate();
+</script>
+
+</body>
+</html>
